@@ -1,4 +1,4 @@
-baseURL = 'https://whiledoing.github.io/my-hugo-blog/en'
+baseURL = 'https://whiledoing.github.io/my-hugo-blog'
 languageCode = 'en-us'
 title = "whiledoing's blog"
-theme = 'zzo'
+theme = 'fix-it'
