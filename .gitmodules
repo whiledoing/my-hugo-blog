@@ -6,9 +6,8 @@
 [submodule "themes/learn"]
 	path = themes/learn
 	url = https://github.com/matcornic/hugo-theme-learn
+	ignore = dirty
 [submodule "themes/love-it"]
 	path = themes/love-it
 	url = https://github.com/dillonzq/LoveIt
-[submodule "themes/fix-it"]
-	path = themes/fix-it
-	url = https://github.com/hugo-fixit/FixIt.git
+	ignore = dirty

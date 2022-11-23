@@ -1,4 +1,1 @@
-baseURL = 'https://whiledoing.github.io/my-hugo-blog'
-languageCode = 'en-us'
-title = "whiledoing's blog"
-theme = 'fix-it'
+config-for-love-it.toml

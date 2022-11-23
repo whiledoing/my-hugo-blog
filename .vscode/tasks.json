@@ -6,7 +6,7 @@
         {
             "label": "server",
             "type": "shell",
-            "command": "hugo server -D",
+            "command": "hugo server -D --disableFastRender --navigateToChanged",
             "options": {
                 "cwd": "${workspaceFolder}"
             },
