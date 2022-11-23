@@ -3,3 +3,6 @@
 	url = https://github.com/zzossig/hugo-theme-zzo.git
 	ignore = dirty
 
+[submodule "themes/learn"]
+	path = themes/learn
+	url = https://github.com/matcornic/hugo-theme-learn
