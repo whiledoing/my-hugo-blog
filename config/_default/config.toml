@@ -1,5 +1,5 @@
-baseURL = "http://example.org"
-title = "Hugo Zzo Theme"
+baseURL = "https://whiledoing.github.io/my-hugo-blog"
+title = "whiledoing's blog"
 theme = "zzo"
 
 defaultContentLanguage = "en"
@@ -15,7 +15,7 @@ enableEmoji = true
 paginate = 13
 rssLimit = 100
 
-enableGitInfo = false
+enableGitInfo = true
 googleAnalytics = ""
 
 [markup]
