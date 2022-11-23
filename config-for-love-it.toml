@@ -3,9 +3,6 @@ baseURL = "https://whiledoing.github.io/my-hugo-blog"
 # theme
 # 主题
 theme = "love-it"
-# themes directory
-# 主题目录
-# themesDir = "../.."
 
 # website title
 # 网站标题
@@ -26,7 +23,7 @@ hasCJKLanguage = true
 
 # default amount of posts in each pages
 # 默认每页列表显示的文章数目
-paginate = 12
+paginate = 10
 # google analytics code [UA-XXXXXXXX-X]
 # 谷歌分析代号 [UA-XXXXXXXX-X]
 googleAnalytics = ""
