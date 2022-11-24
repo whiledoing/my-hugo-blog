@@ -1,13 +1,9 @@
 [submodule "themes/zzo"]
 	path = themes/zzo
 	url = https://github.com/zzossig/hugo-theme-zzo.git
-	ignore = dirty
-
 [submodule "themes/learn"]
 	path = themes/learn
 	url = https://github.com/matcornic/hugo-theme-learn
-	ignore = dirty
 [submodule "themes/love-it"]
 	path = themes/love-it
 	url = https://github.com/dillonzq/LoveIt
-	ignore = dirty

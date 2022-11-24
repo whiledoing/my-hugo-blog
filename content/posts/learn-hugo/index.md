@@ -2,7 +2,6 @@
 title: "Learn Hugo Framework"
 subtitle: ""
 date: 2022-11-23T18:10:25+08:00
-draft: true
 author: "whiledoing"
 tags: ["hugo", "golang"]
 categories: ["software"]
