@@ -176,6 +176,8 @@ type poolDequeue struct {
 
 另外, 为了适配QPS压力不大的情况, 在`poolLocal`中, 默认提供一个占位用的`private`对象: 优先只消耗这个`private`对象, 而不是去构造复杂的`double-linked-ring-buffer-queue`. 具体可以看下`Get()`的代码:
 
+![syncpool-double-linked-ring-buffer](syncpool-double-linked-ring-buffer.jpeg "private shared")
+
 ```go
 // Local per-P Pool appendix.
 type poolLocalInternal struct {
