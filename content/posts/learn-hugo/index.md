@@ -22,14 +22,10 @@ hugo server自带livereload功能（原理是hook js代码到返回的html页面
 
 通过`hugo server --navigateToChanged`命令, 可以自动加载到最新变更的文件
 
-{{< admonition type=tip title="environment模式" >}}
-
 hugo设计有environment的概念，用来隔离不同的使用场景：
 
 - `hugo server`默认使用development模式, 等价于`--environment development`
 - `hugo`默认使用production模式, 等价于`--envirnment production`
-
-{{< /admonition >}}
 
 hugo的保存资源的路径:
 
@@ -69,14 +65,13 @@ hugo new -k post-bundle posts/my-post
 
 ### go templating basics
 
-{{< admonition type=example title="variable" >}}
 ```go
 {{ $animals := .Params.animals }}
 {{ $animals }}
 ```
-{{< /admonition >}}
 
-{{< admonition type=example title="loops" >}}
+---
+
 ```go
 {{ range $animals }}
   <p>{{ .name }}</p>
@@ -85,6 +80,8 @@ hugo new -k post-bundle posts/my-post
 
 这里的`.`表示当前上下文变量, 也就是 for 循环展开的 animals 对应具体对象.
 
+---
+
 ```go
 {{ range $index, $animal := range $animals }}
   <p>{{ add $index 1 }}: {{ $animal.name }}</p>
@@ -92,9 +89,9 @@ hugo new -k post-bundle posts/my-post
 ```
 
 这里的`add`方法用来让坐标从 1 开始
-{{< /admonition >}}
 
-{{< admonition example "logic" >}}
+---
+
 ```go
 {{ range $index, $animal := .Params.animals }}
   {{ if eq $animal.is_bird true }}
@@ -106,22 +103,21 @@ hugo new -k post-bundle posts/my-post
 ```
 
 这里使用字面的英文来表示比较操作符: eq/ne/lt/le/gt/ge
-{{< /admonition >}}
 
-{{< admonition example "slices/dict" >}}
+---
+
 ```go
 {{ $s := slice "kea" "kaka" "tui" }}
 {{ $d := dict "year" (now.Format "2006")}}
 ```
 
-注意, 这里使用隔空来区分不同的 items
-{{< /admonition >}}
+注意, 这里使用空格来区分不同的 items
 
-{{< admonition example "inline functions" >}}
+---
 ![go-templating-functions](images/go-templating-functions.png "go templating functions")
-{{< /admonition >}}
 
-{{< admonition example "with" >}}
+---
+
 ```go
 // if set description, use description
 {{ with .Param "description" }}
@@ -132,9 +128,9 @@ hugo new -k post-bundle posts/my-post
     {{ .Summary }}
 {{ end }}
 ```
-{{< /admonition >}}
 
-{{< admonition example "pipe" >}}
+---
+
 ```go
 {{ if isset .Params "caption" | or isset .Params "title" | or isset .Params "attr" }}
   Stuff here
@@ -143,7 +139,6 @@ hugo new -k post-bundle posts/my-post
 // index操作符用来dict或者slice中提取元素, 和dot操作符一样, 只是输入的key是动态的
 {{ index .Params "disqus_url" | html }}
 ```
-{{< /admonition >}}
 
 ## themes
 
