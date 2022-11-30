@@ -929,49 +929,49 @@ func sqlQuote(x interface{}) string {
 type Func func(string) (interface{}, error)
 
 type future struct {
-	v     interface{}
-	e     error
-	ready chan struct{}
+    v     interface{}
+    e     error
+    ready chan struct{}
 }
 
 type Memo struct {
-	f Func
-	l sync.RWMutex
-	m map[string]*future
+    f Func
+    l sync.RWMutex
+    m map[string]*future
 }
 
 func New(f Func) *Memo {
-	return &Memo{f: f, m: make(map[string]*future)}
+    return &Memo{f: f, m: make(map[string]*future)}
 }
 
 func (m *Memo) Get(key string) (interface{}, error) {
-	// 1. 先用读锁获取数据
-	m.l.RLock()
-	f := m.m[key]
-	m.l.RUnlock()
+    // 1. 先用读锁获取数据
+    m.l.RLock()
+    f := m.m[key]
+    m.l.RUnlock()
 
-	// 2. 对于value为指针数据，直接判断nil判断存在性
-	if f == nil {
+    // 2. 对于value为指针数据，直接判断nil判断存在性
+    if f == nil {
 
-		// 3. 加写锁，再读取一次，保障一定只有一次进入set语义
-		m.l.Lock()
-		newf := m.m[key]
-		if newf == nil {
-			f = &future{ready: make(chan struct{})}
-			f.v, f.e = m.f(key)
-			m.m[key] = f
+        // 3. 加写锁，再读取一次，保障一定只有一次进入set语义
+        m.l.Lock()
+        newf := m.m[key]
+        if newf == nil {
+            f = &future{ready: make(chan struct{})}
+            f.v, f.e = m.f(key)
+            m.m[key] = f
 
-			// 4. 利用close进行协程同步
-			close(f.ready)
-		} else {
-			f = newf
-		}
-		m.l.Unlock()
-	}
+            // 4. 利用close进行协程同步
+            close(f.ready)
+        } else {
+            f = newf
+        }
+        m.l.Unlock()
+    }
 
-	// 5. 等待ready，close之后的channel，会直接返回
-	<-f.ready
-	return f.v, f.e
+    // 5. 等待ready，close之后的channel，会直接返回
+    <-f.ready
+    return f.v, f.e
 }
 ```
 
@@ -990,36 +990,36 @@ type Func func(key string) (interface{}, error)
 
 // A result is the result of calling a Func.
 type result struct {
-	value interface{}
-	err   error
+    value interface{}
+    err   error
 }
 
 type entry struct {
-	res   result
-	ready chan struct{} // closed when res is ready
+    res   result
+    ready chan struct{} // closed when res is ready
 }
 
 // A request is a message requesting that the Func be applied to key.
 type request struct {
-	key      string
-	response chan<- result // the client wants a single result
+    key      string
+    response chan<- result // the client wants a single result
 }
 
 type Memo struct{ requests chan request }
 
 // New returns a memoization of f.  Clients must subsequently call Close.
 func New(f Func) *Memo {
-	memo := &Memo{requests: make(chan request)}
-	go memo.server(f)
-	return memo
+    memo := &Memo{requests: make(chan request)}
+    go memo.server(f)
+    return memo
 }
 
 func (memo *Memo) Get(key string) (interface{}, error) {
     // 请求都通过带有channel的请求和主协程交互
-	response := make(chan result)
-	memo.requests <- request{key, response}
-	res := <-response
-	return res.value, res.err
+    response := make(chan result)
+    memo.requests <- request{key, response}
+    res := <-response
+    return res.value, res.err
 }
 
 func (memo *Memo) Close() { close(memo.requests) }
@@ -1029,32 +1029,32 @@ func (memo *Memo) Close() { close(memo.requests) }
 //!+monitor
 
 func (memo *Memo) server(f Func) {
-	cache := make(map[string]*entry)
-	for req := range memo.requests {
-		e := cache[req.key]
-		if e == nil {
-			// This is the first request for this key.
-			e = &entry{ready: make(chan struct{})}
-			cache[req.key] = e
-			go e.call(f, req.key) // call f(key)
+    cache := make(map[string]*entry)
+    for req := range memo.requests {
+        e := cache[req.key]
+        if e == nil {
+            // This is the first request for this key.
+            e = &entry{ready: make(chan struct{})}
+            cache[req.key] = e
+            go e.call(f, req.key) // call f(key)
         }
         // 阻塞都代理到别的协程中，保障主协程高速运行
-		go e.deliver(req.response)
-	}
+        go e.deliver(req.response)
+    }
 }
 
 func (e *entry) call(f Func, key string) {
-	// Evaluate the function.
-	e.res.value, e.res.err = f(key)
-	// Broadcast the ready condition.
-	close(e.ready)
+    // Evaluate the function.
+    e.res.value, e.res.err = f(key)
+    // Broadcast the ready condition.
+    close(e.ready)
 }
 
 func (e *entry) deliver(response chan<- result) {
-	// Wait for the ready condition.
-	<-e.ready
-	// Send the result to the client.
-	response <- e.res
+    // Wait for the ready condition.
+    <-e.ready
+    // Send the result to the client.
+    response <- e.res
 }
 ```
 
@@ -1112,17 +1112,17 @@ export GOPROXY=https://goproxy.cn
 考虑这样的场景，设置一个1s的ticker，和一个2s的stop timer。如果写成下面的样子，stop timer永远不会执行：
 
 ```go
-	for {
-		select {
-		case <-time.After(2*time.Second):
-			goto exit
-		case t := <-time.Tick(time.Second)
-			fmt.Printf("time meet at %v\n", t)
-		}
-	}
+    for {
+        select {
+        case <-time.After(2*time.Second):
+            goto exit
+        case t := <-time.Tick(time.Second)
+            fmt.Printf("time meet at %v\n", t)
+        }
+    }
 
 exit:
-	fmt.Printf("exit")
+    fmt.Printf("exit")
 ```
 
 因为在select逻辑中，每次select执行都会**重新构造case的运行结构体，对应的channel也会重新构造**，所以，在select中构造的channel，在
@@ -1131,41 +1131,41 @@ exit:
 改成下面的形式也不对：
 
 ```go
-	for {
+    for {
         // 治标不治本，到了下一次for的时候，重新构造的timer，存在同样的问题。设定时间小的先执行，且永远先执行
         afterTimeChannel := time.After(2 * time.Second)
         tickTimeChannel := time.Tick(time.Second)
 
-		select {
-		case <-afterTimeChannel:
-			goto exit
-		case t := <-tickTimeChannel:
-			fmt.Printf("time meet at %v\n", t)
-		}
-	}
+        select {
+        case <-afterTimeChannel:
+            goto exit
+        case t := <-tickTimeChannel:
+            fmt.Printf("time meet at %v\n", t)
+        }
+    }
 
 exit:
-	fmt.Printf("exit")
+    fmt.Printf("exit")
 ```
 
 需要将timer的构造放在更全局的位置：
 
 ```go
-	afterTimeChannel := time.After(2 * time.Second)
-	tickTimeChannel := time.Tick(time.Second)
+    afterTimeChannel := time.After(2 * time.Second)
+    tickTimeChannel := time.Tick(time.Second)
 
     // 理解：for和select是一个统一逻辑体，timer放在for的外面
-	for {
-		select {
-		case <-afterTimeChannel:
-			goto exit
-		case t := <-tickTimeChannel:
-			fmt.Printf("time meet at %v\n", t)
-		}
-	}
+    for {
+        select {
+        case <-afterTimeChannel:
+            goto exit
+        case t := <-tickTimeChannel:
+            fmt.Printf("time meet at %v\n", t)
+        }
+    }
 
 exit:
-	fmt.Printf("exit")
+    fmt.Printf("exit")
 ```
 
 参考：
@@ -1182,3 +1182,7 @@ go-land有几个非常好用的技巧：
 - completion时候，使用tab可以替换当前的内容，比如将printf替换到println，而使用回车不会替换，而是插入。
 - 连续两次使用completion按键，会提示可将当前上下文作为第一个变量的函数列表。
 - postfix completion，非常有意思，使用`rr`表示`return error`，在一个函数返回error的情况下，改成如果发现`err != nil`返回error的语句。
+
+## library
+
+### sync.Pool

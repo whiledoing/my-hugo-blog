@@ -62,41 +62,41 @@ func (c *Command) Find(args []string) (*Command, []string, error) {
 ```go
 // https://github.com/spf13/cobra/blob/6b0bd3076cfafd1c108264ed1e4aa0c0fe3f8537/command.go#L618
 func stripFlags(args []string, c *Command) []string {
-	if len(args) == 0 {
-		return args
-	}
-	c.mergePersistentFlags()
+    if len(args) == 0 {
+        return args
+    }
+    c.mergePersistentFlags()
 
-	commands := []string{}
-	flags := c.Flags()
+    commands := []string{}
+    flags := c.Flags()
 
 Loop:
-	for len(args) > 0 {
-		s := args[0]
-		args = args[1:]
-		switch {
-		case s == "--":
-			// "--" terminates the flags
-			break Loop
-		case strings.HasPrefix(s, "--") && !strings.Contains(s, "=") && !hasNoOptDefVal(s[2:], flags):
-			// If '--flag arg' then
-			// delete arg from args.
-			fallthrough // (do the same as below)
-		case strings.HasPrefix(s, "-") && !strings.Contains(s, "=") && len(s) == 2 && !shortHasNoOptDefVal(s[1:], flags):
-			// If '-f arg' then
-			// delete 'arg' from args or break the loop if len(args) <= 1.
-			if len(args) <= 1 {
-				break Loop
-			} else {
-				args = args[1:]
-				continue
-			}
-		case s != "" && !strings.HasPrefix(s, "-"):
-			commands = append(commands, s)
-		}
-	}
+    for len(args) > 0 {
+        s := args[0]
+        args = args[1:]
+        switch {
+        case s == "--":
+            // "--" terminates the flags
+            break Loop
+        case strings.HasPrefix(s, "--") && !strings.Contains(s, "=") && !hasNoOptDefVal(s[2:], flags):
+            // If '--flag arg' then
+            // delete arg from args.
+            fallthrough // (do the same as below)
+        case strings.HasPrefix(s, "-") && !strings.Contains(s, "=") && len(s) == 2 && !shortHasNoOptDefVal(s[1:], flags):
+            // If '-f arg' then
+            // delete 'arg' from args or break the loop if len(args) <= 1.
+            if len(args) <= 1 {
+                break Loop
+            } else {
+                args = args[1:]
+                continue
+            }
+        case s != "" && !strings.HasPrefix(s, "-"):
+            commands = append(commands, s)
+        }
+    }
 
-	return commands
+    return commands
 }
 ```
 
@@ -110,14 +110,14 @@ cobra中的help是自动生成的, 核心基于go-template生成**复杂结构�
 // https://github.com/spf13/cobra/blob/6b0bd3076cfafd1c108264ed1e4aa0c0fe3f8537/command.go#L531
 // UsageTemplate returns usage template for the command.
 func (c *Command) UsageTemplate() string {
-	if c.usageTemplate != "" {
-		return c.usageTemplate
-	}
+    if c.usageTemplate != "" {
+        return c.usageTemplate
+    }
 
-	if c.HasParent() {
-		return c.parent.UsageTemplate()
-	}
-	return `Usage:{{if .Runnable}}
+    if c.HasParent() {
+        return c.parent.UsageTemplate()
+    }
+    return `Usage:{{if .Runnable}}
   {{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
   {{.CommandPath}} [command]{{end}}{{if gt (len .Aliases) 0}}
 
@@ -158,13 +158,13 @@ cobra中核心运行函数有个2个签名: 一个是无error的`Run`, 一个是
 func exec() {
   ...
 
-	if c.RunE != nil {
-		if err := c.RunE(c, argWoFlags); err != nil {
-			return err
-		}
-	} else {
-		c.Run(c, argWoFlags)
-	}
+    if c.RunE != nil {
+        if err := c.RunE(c, argWoFlags); err != nil {
+            return err
+        }
+    } else {
+        c.Run(c, argWoFlags)
+    }
 }
 ```
 
