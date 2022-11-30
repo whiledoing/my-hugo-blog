@@ -316,3 +316,4 @@ func init() {
 
 - [深度分析 Golang sync.Pool 底层原理](https://www.cyhone.com/articles/golang-waitgroup/)
 - [多图详解Go的sync.Pool源码](https://www.cnblogs.com/luozhiyun/p/14194872.html)
+- [请问sync.Pool有什么缺点？](https://mp.weixin.qq.com/s?__biz=MzA4ODg0NDkzOA==&mid=2247487149&idx=1&sn=f38f2d72fd7112e19e97d5a2cd304430&source=41#wechat_redirect)
