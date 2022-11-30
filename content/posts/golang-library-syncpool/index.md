@@ -7,13 +7,13 @@ tags: [golang]
 categories: [programming]
 ---
 
-源码层面分析一下golang高性能对象池的实现机制: [sync.Pool](https://go.dev/src/sync/pool.go)
+源码层面分析下golang高性能对象池的实现机制: [sync.Pool](https://go.dev/src/sync/pool.go)
 
 <!--more-->
 
 ## Usage
 
-`sync.Pool`提供对象池的过能耐, 对外提供: `New` `Get` `Put`三个方法, 一个简单的示例:
+`sync.Pool`提供对象池的管理能力, 对外接口有 `New` `Get` `Put` 这三个方法, 一个简单的示例:
 
 ```go
 var pool *sync.Pool
@@ -57,16 +57,16 @@ Get Pool Object： &{}
 
 `sync.Pool`设计的关键要点:
 
-1. 并发高性能: 在并发情况下, 可以高性能的put和get对象数据.
-2. 内存使用弹性变化: 如果数据不在被使用, pool的数据可以gc掉. 如果数据不够, 自动用new创建新数据.
+1. 并发高性能: 在并发情况下, 可以高性能的`Put`和`Get`对象.
+2. 内存弹性变化: 如果数据不再被使用, pool管理的数据可以GC\掉. 如果数据不够, 可自动用`New`出来新数据.
 
 ---
 
-为了做到高性能, 最重要的是在GMP模型的每个P上, 都构建一个局部`poolLocal`. 在任何的`Get`和`Put`操作时, 先调用`Pin`方法
-将当前G绑定到P上, 这样子后续所有的实际内存访问操作, 都是**单线程**的, 不存在并发冲突.
+为了做到高性能, 最重要的是在每个P上(GMP调度模型), 都构建一个局部`poolLocal`. 在任何的`Get`和`Put`操作时, 先调用`Pin`方法
+将当前G绑定到P上, 这样子后续所有的内存访问操作都是**单线程**的, 不存在并发问题.
 
-> 有点类似`ThreadLocal`: 特定线程只能访问对应线程特定的内存区域. 在golang中, 通过G绑定P, P绑定特定数据(通过pid映射),
-> 就等价于特定内存只能被特定的G访问, 进而没有并发出图的问题.
+> 有点类似`ThreadLocal`: 特定线程只能访问特定内存区域. 在golang中, 通过G绑定P, P绑定数据(通过pid映射),
+> 实际上等价于特定内存只能被特定的G访问, 进而没有并发的问题.
 
 ```go
 // pin pins the current goroutine to P, disables preemption and
@@ -87,14 +87,14 @@ func (p *Pool) pin() (*poolLocal, int) {
 }
 ```
 
-其中, `localSize`记录当前`localPool`的个数, 如果没有对应pid的数据, 就是没有初始化, 那在`pinSlow()`方法中, 做延迟的初始化, 默认会构造
+其中, `localSize`记录当前`localPool`的个数, 如果没有对应pid数据, 就是没有初始化: 后续会在`pinSlow()`方法中, 做延迟初始化, 默认会构造
 `runtime.GOMAXPROCS(0)`个`localPool`.
 
-这里存在一个问题, 如果`Get`方法在当前`localPool`上获取不到数据, 那么就会new新数据, 但实际上, 别的P上的`localPool`还是有待缓存的对象的,
-这会造成一定的内存浪费(并不能保证所有p上的缓存情况都一致, 肯定会出现特定的P申请的多, 但是释放的少).
+这里存在一个问题: 如果`Get`方法在当前`localPool`上获取不到数据, 就会new新数据, 但实际上, 其余P上的`localPool`还有缓存的对象,
+这会造成一定的内存浪费(并不能保证所有P上的缓存情况都一致, 肯定会出现特定P申请的多, 但释放的少).
 
-为此设计的时候, 并不是将`Get`和`Put`操作的内存都局限于当前P上, 而是`Put`单G访问, 但是`Get`在当前获取不到数据时候, 会从别的`localPool`上
-偷取数据. 所以, 整体的底层`localPool`数据结构被设计为**SPMC**模式的并发安全队列.
+为此, 并不是将`Get`和`Put`操作的内存都局限于当前P上, 而是`Put`单P访问, 但`Get`在当前P获取不到数据时, 会从其余P上的`localPool`
+偷取数据. 所以, `localPool`数据结构被设计为**SPMC(single-producer-multi-consumer)**模式的并发安全队列.
 
 ![syncpool-data-structure](syncpool-data-structure.png "inner-pool-data-structure")
 
@@ -168,13 +168,13 @@ type poolDequeue struct {
 }
 ```
 
-数据结构上有几个设计很有意思:
+数据结构设计上有几点很有意思:
 
-- 使用`ring-buffer-queue`作为实际的最底层存储队列, 对内存更友好, 而且实现SPMC模式的lock-free队列也相对低复杂度.
-- 上层使用**双层链表**来串起来所有的`ring-buffer-queue`, 这可以更好的扩展队列容量, 不会出现没有办法`Put`进阻塞的情况
-- 每次`ring-buffer-quene`都是double size, 等于是一种渐进式的提升内存消耗的方式: 这样子可以在高QPS情况下, 使得**链表的长度更短**.
+- 使用`ring-buffer-queue`作为实际最底层存储队列, 对内存更友好, 而且实现**lock-free SPMC**也相对低复杂度.
+- 上层使用**双层链表**来串所有`ring-buffer-queue`, 这可以更好的扩展队列容量, 不会出现没有办法`Put`进而阻塞的情况
+- 每次扩展`ring-buffer-quene`都是double size, 等于是一种渐进式提升消耗的方式: 在高QPS情况下, 使得**链表的长度更短**.
 
-另外, 为了适配在第内存消耗和QPS压力不大的情况, 在`poolLocal`中, 默认提供一个占位用的`private`对象, 默认会优先只消耗这个`private`对象, 而不是去构造复杂的`double-linked-ring-buffer-queue`. 具体可以看下`Get()`的代码:
+另外, 为了适配QPS压力不大的情况, 在`poolLocal`中, 默认提供一个占位用的`private`对象: 优先只消耗这个`private`对象, 而不是去构造复杂的`double-linked-ring-buffer-queue`. 具体可以看下`Get()`的代码:
 
 ```go
 // Local per-P Pool appendix.
@@ -224,7 +224,7 @@ func (p *Pool) Get() interface{} {
 }
 ```
 
-而如果在本地找不到, 就会去别的`localPool`中去偷, 这就是`getSlow`方法, 其中的底层接口就不是线程安全的了, 等于`multi-consumer`并发去偷数据. 其底层是通过CAS操作来做到无锁实现, 比较复杂就不贴了.
+而如果本地找不到, 就会去别的`localPool`偷, 实现在`getSlow`方法: `multi-consumer`并发去偷就并非线程安全: 底层通过CAS操作实现无锁, 相对比较复杂就不贴了.
 
 ```go
 func (p *Pool) getSlow(pid int) interface{} {
@@ -271,9 +271,9 @@ func (p *Pool) getSlow(pid int) interface{} {
 
 ## Clean Up
 
-现在已经知道`sync.Pool`在负载情况下, 会根据压力自动构造底层`double-linked-ring-buffer-queue`来缓存对象的指针, 进而有效降低GC的压力. 但是, 如果负载降低下来, 这些缓存的对象该如何清理呢.
+`sync.Pool`在负载情况下, 会根据压力自动构造底层`double-linked-ring-buffer-queue`来缓存对象指针, 进而有效降低GC压力. 但如果负载降低下来, 这些缓存的对象该如何清理呢.
 
-`sync.Pool`默认没有提供清理的接口和策略, 主要处理逻辑在GC且STW时候, 清空缓存数据. 但为了防止清空后, 瞬间`Get`的压力太大, 在正式清空前, 会利用victim(牺牲者)作为缓冲区, 临时缓存旧数据, 等待到下一个GC时, 再完全清空:
+`sync.Pool`默认没有提供清理的接口和策略, 主要处理逻辑是在GC STW时, 清空缓存数据. 但为防止清空后,瞬间`Get`的压力太大, 在正式清空前, 会利用victim(牺牲者)作为缓冲区, 等待到下一个GC时, 再完全清空:
 
 ```go
 func poolCleanup() {
@@ -291,20 +291,24 @@ func poolCleanup() {
 
     oldPools, allPools = allPools, nil
 }
+
+func init() {
+    runtime_registerPoolCleanup(poolCleanup)
+}
 ```
 
-> `vicitm cache`是从CPU的cache系统中提取的概念, 具体可以[参考](https://www.quora.com/What-is-a-victim-cache)
+> `vicitm cache`是从CPUcache系统中提取的[概念](https://www.quora.com/What-is-a-victim-cache)
 >
 > A victim cache allocates only lines written back from a higher level cache. There will be no allocations on fill data as part of read miss.
 > For eg: In a multi core processor with 3 levels of cache, the L3 cache could be designed as victim cache (though not necessarily always)
 >
-> In this case, any read miss from the core will only allocate in L1 and L2 cache as data is fetched from main memory. When L1/L2 cache evicts a line, it gets allocated in the L3 victim cache. This works on the principle that since those lines had a locality of reference and was evicted because of capacity limitation, there is a good chance of getting referred again. In that case, reading from L3 is still faster than reading from main memory
+> In this case, any read miss from the core will only allocate in L1 and L2 cache as data is fetched from main memory. When L1/L2 cache evicts a line, it gets allocated in the L3 victim cache. This works on the principle that since those lines had **a locality of reference and was evicted because of capacity limitation, there is a good chance of getting referred again**. In that case, reading from L3 is still faster than reading from main memory
 
-可以怎么理解:
+这么拆解理解:
 
-- 首先不能不清空数据, 否则一直cache数据, 后续如果不用的话, 就是内存浪费.
-- 清空后, 主要的压力还是`Get`, 因为如果击穿缓存需要重新new, 而`Put`只是构造一些slots保存缓存, 压力不大.
-- vicim机制等于是一个临时的buffer, 让`Get`在重压力下不会轻易被击穿, 但是如果压力下来, 终究还是会清空数据. 一定程度上, 用buffer的方式, 平滑了缓存击穿的压力, 但也平滑了内存被清空的速度, 是一个空间和性能的tradeoff.
+- 首先不能不清空数据, 否则一直cache数据, 后续如不用的话就是内存浪费.
+- 清空后, 主要压力在`Get`: 因为如果击穿缓存需要重新`New`, 而`Put`只需要构造一些slots保存缓存, 开销压力并不大.
+- vicim等于是一个临时buffer, 让`Get`在重压力下不会轻易被击穿, 但后续如压力下来, 终态也会清空数据. 一定程度上说, 用vicim buffer的方式, 平滑了内存被清空的速度, 但额外消耗了空间: 等于是一个空间和性能的tradeoff.
 
 ## References
 
