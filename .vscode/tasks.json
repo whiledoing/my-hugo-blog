@@ -14,6 +14,18 @@
                 "kind": "build",
                 "isDefault": true
             }
-        }
+        },
+        {
+            "label": "push",
+            "type": "shell",
+            "command": "git add content && git commit -m \"update $(date +\"%Y-%M-%d %T\")\" && git push",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
     ]
 }
