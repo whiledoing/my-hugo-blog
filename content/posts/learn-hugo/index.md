@@ -1,6 +1,5 @@
 ---
 title: "Learn Hugo Framework"
-subtitle: ""
 date: 2022-11-23T18:10:25+08:00
 author: "whiledoing"
 tags: ["hugo", "golang"]
@@ -65,22 +64,19 @@ archetypes
 ```bash
 # 使用kind来设定archetypes的类型
 # 在hugo中, 实际上领域名词叫做type, 但这里应该是`-t`已经被themes使用, 所以用-k来制定
-hugo new --kind post-bundle posts/my-post
+hugo new -k post-bundle posts/my-post
 ```
 
 ### go templating basics
 
 {{< admonition type=example title="variable" >}}
-
 ```go
 {{ $animals := .Params.animals }}
 {{ $animals }}
 ```
-
 {{< /admonition >}}
 
 {{< admonition type=example title="loops" >}}
-
 ```go
 {{ range $animals }}
   <p>{{ .name }}</p>
@@ -96,11 +92,9 @@ hugo new --kind post-bundle posts/my-post
 ```
 
 这里的`add`方法用来让坐标从 1 开始
-
 {{< /admonition >}}
 
 {{< admonition example "logic" >}}
-
 ```go
 {{ range $index, $animal := .Params.animals }}
   {{ if eq $animal.is_bird true }}
@@ -112,24 +106,43 @@ hugo new --kind post-bundle posts/my-post
 ```
 
 这里使用字面的英文来表示比较操作符: eq/ne/lt/le/gt/ge
-
 {{< /admonition >}}
 
 {{< admonition example "slices/dict" >}}
-
 ```go
 {{ $s := slice "kea" "kaka" "tui" }}
 {{ $d := dict "year" (now.Format "2006")}}
 ```
 
 注意, 这里使用隔空来区分不同的 items
-
 {{< /admonition >}}
 
 {{< admonition example "inline functions" >}}
-
 ![go-templating-functions](images/go-templating-functions.png "go templating functions")
+{{< /admonition >}}
 
+{{< admonition example "with" >}}
+```go
+// if set description, use description
+{{ with .Param "description" }}
+    // context here means .Param.description
+    {{ . }}
+{{ else }}
+    // else use .Summary
+    {{ .Summary }}
+{{ end }}
+```
+{{< /admonition >}}
+
+{{< admonition example "pipe" >}}
+```go
+{{ if isset .Params "caption" | or isset .Params "title" | or isset .Params "attr" }}
+  Stuff here
+{{ end }}
+
+// index操作符用来dict或者slice中提取元素, 和dot操作符一样, 只是输入的key是动态的
+{{ index .Params "disqus_url" | html }}
+```
 {{< /admonition >}}
 
 ## themes

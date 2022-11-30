@@ -4,3 +4,9 @@
 [submodule "themes/love-it"]
 	path = themes/love-it
 	url = https://github.com/dillonzq/LoveIt
+[submodule "themes/hugo-book"]
+	path = themes/hugo-book
+	url = https://github.com/alex-shpak/hugo-book
+[submodule "themes/wowchemy"]
+	path = themes/wowchemy
+	url = https://github.com/wowchemy/wowchemy-hugo-themes
