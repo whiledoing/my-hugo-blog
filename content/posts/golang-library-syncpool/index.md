@@ -1,7 +1,6 @@
 ---
 title: "Golang Libaray Sync.Pool Source Code Analysis"
 date: 2022-11-30T19:47:37+08:00
-draft: true
 author: "whiledoing"
 tags: [golang]
 categories: [programming]

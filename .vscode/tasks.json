@@ -21,11 +21,30 @@
             "command": "git add content && git commit -m \"update $(date +\"%Y-%M-%d %T\")\" && git push",
             "options": {
                 "cwd": "${workspaceFolder}"
-            },
-            "group": {
-                "kind": "build",
-                "isDefault": true
             }
         },
+        {
+            "label": "new-post-bundle",
+            "type": "shell",
+            "command": "hugo new posts/${input:new-post-name}/index.md",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+        },
+        {
+            "label": "new-post",
+            "type": "shell",
+            "command": "hugo new posts/${input:new-post-name}.md",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+        },
+    ],
+    "inputs": [
+        {
+            "id": "new-post-name",
+            "description": "describe the new post-bundle directory name",
+            "type": "promptString",
+        }
     ]
 }
