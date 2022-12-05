@@ -18,7 +18,7 @@
         {
             "label": "push",
             "type": "shell",
-            "command": "git add content && git commit -m \"update $(date +\"%Y-%M-%d %T\")\" && git push",
+            "command": "git add content && git commit -m \"update $(date +\"%Y-%m-%d %T\")\" && git push",
             "options": {
                 "cwd": "${workspaceFolder}"
             }
