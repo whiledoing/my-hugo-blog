@@ -93,6 +93,56 @@ echo -n '{"sub": "1234567890", "name": "John Doe", "admin": true}' | base64 \
 
 ## RSA
 
+非对称加密算法:
+
+- 介绍RSA算法计算过程的youtube: [RSA algorithm step by step example](https://www.youtube.com/watch?v=j2NBya6ADSY)
+- [一文详解 RSA 非对称加密算法](https://www.cnblogs.com/xiaxveliang/p/12395993.html)
+
+非对称加密算法的设计要比对称算法难得多，在 TLS 里只有很少的几种，比如 DH、DSA、RSA、ECC 等。
+
+- RSA 可能是其中最著名的一个，几乎可以说是非对称加密的代名词，它的安全性基于**大整数分解**的数学难题，使用两个超大素数的乘积作为生成密钥的材料，想要从公钥推算出私钥是非常困难的。10 年前 RSA 密钥的推荐长度是 1024，但随着计算机运算能力的提高，现在 1024 已经不安全，普遍认为至少要 2048 位。
+- ECC（Elliptic Curve Cryptography）是非对称加密里的“后起之秀”，它基于**椭圆曲线离散对数**的数学难题，使用特定的曲线方程和基点生成公钥和私钥，子算法 ECDHE 用于密钥交换，ECDSA 用于数字签名。
+
+比起 RSA，ECC 在安全强度和性能上都有明显的优势。160 位的 ECC 相当于 1024 位的 RSA，而 224 位的 ECC 则相当于 2048 位的 RSA。因为密钥短，所以相应的计算量、消耗的内存和带宽也就少，加密解密的性能就上去了，对于现在的移动互联网非常有吸引力。
+
+---
+
+对称加密算法:
+
+- DES: Data Encryption Standard
+- AES: Advanced Encryption Standard, [How does AES encryption work? Advanced Encryption Standard
+](https://www.youtube.com/watch?v=lnKPoWZnNNM)
+
 ## X.509
 
+[what is an X.509 Certificate](https://www.ssl.com/faqs/what-is-an-x-509-certificate/)
+
+> X.509 is a standard format for public key certificates, digital documents that securely associate cryptographic key pairs with identities such as websites, individuals, or organizations.
+>
+> X.509 certificate includes a public key, digital signature, and information about both the identity associated with the certificate and its issuing certificate authority (CA)
+
+## CA(Certificate Authority)
+
+ CA（Certificate Authority，证书认证机构）就像网络世界里的公安局、教育部、公证中心，具有极高的可信度，由它来给各个公钥签名，用自身的信誉来保证公钥无法伪造，是可信的。CA 对公钥的签名认证也是有格式的，不是简单地把公钥绑定在持有者身份上就完事了，还要包含序列号、用途、颁发者、有效时间等等，把这些打成一个包再签名，完整地证明公钥关联的各种信息，形成“数字证书”（Certificate）。
+
+知名的 CA 全世界就那么几家，比如 DigiCert、VeriSign、Entrust、Let’s Encrypt 等，它们签发的证书分 **DV、OV、EV** 三种，区别在于可信程度。
+
+> DV 是最低的，只是域名级别的可信，背后是谁不知道。EV 是最高的，经过了法律和审计的严格核查，可以证明网站拥有者的身份（在浏览器地址栏会显示出公司的名字，例如 Apple、GitHub 的网站）。
+
+不过，CA 怎么证明自己呢？
+
+这还是信任链的问题。小一点的 CA 可以让大 CA 签名认证，但链条的最后，也就是Root CA，就只能自己证明自己了，这个就叫“自签名证书”（Self-Signed Certificate）或者“根证书”（Root Certificate）。你必须相信，否则整个证书信任链就走不下去了。
+
+![ca-chain](./ca-chain.png "ca-chain")
+
 ## SSO
+
+## HTTPS
+
+HTTPS最关键逻辑在于握手阶段:
+
+- 获取访问网站的证书并验证.
+- 基于验证后的证书公钥加密传输**临时随机密码**.
+- 后续基于临时密码做对称加密通信.
+
+![https-handshake](./https-flow.png "https handshake")
