@@ -51,7 +51,7 @@ const encodeURL = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012345678
 
 签名的另一面是验证, 其逻辑和构造签名一样: **就是重新计算一遍**: 验证计算结果和原始签名一致, 就可说明数据本身是完整的, 且没有被恶意伪造或者篡改.
 
-![digital-signature-verify](./digital-signature.svg "")
+![digital-signature-verify](./digital-signature.svg "digital signature")
 
 ---
 
@@ -139,10 +139,47 @@ echo -n '{"sub": "1234567890", "name": "John Doe", "admin": true}' | base64 \
 
 ## HTTPS
 
+### TLS v1.2
+
 HTTPS最关键逻辑在于握手阶段:
 
 - 获取访问网站的证书并验证.
 - 基于验证后的证书公钥加密传输**临时随机密码**.
 - 后续基于临时密码做对称加密通信.
 
-![https-handshake](./https-flow.png "https handshake")
+![https-handshake](./https-tls-v1.2-handshake.webp "https handshake - TLS v1.2")
+
+### TLS v1.3
+
+TLS v1.3在2018年推出, 相比2008年的v1.2协议, 在多处进行升级: [具体参考](https://learn.lianglianglee.com/%E4%B8%93%E6%A0%8F/%E9%80%8F%E8%A7%86HTTP%E5%8D%8F%E8%AE%AE/27%20%20%E6%9B%B4%E5%A5%BD%E6%9B%B4%E5%BF%AB%E7%9A%84%E6%8F%A1%E6%89%8B%EF%BC%9ATLS1.3%E7%89%B9%E6%80%A7%E8%A7%A3%E6%9E%90.md)
+
+其中, 最重要的是规约秘钥交换协议只使用[Diffie Hellman Key Exchange](https://en.wikipedia.org/wiki/Diffie%E2%80%93Hellman_key_exchange)算法:
+
+> The process begins by having the two parties, Alice and Bob, publicly agree on an arbitrary starting color that does not need to be kept secret. In this example, the color is yellow. Each person also selects a secret color that they keep to themselves – in this case, red and cyan. The crucial part of the process is that Alice and Bob each mix their own secret color together with their mutually shared color, resulting in orange-tan and light-blue mixtures respectively, and then publicly exchange the two mixed colors. Finally, each of them mixes the color they received from the partner with their own private color. The result is a final color mixture (yellow-brown in this case) that is identical to their partner's final color mixture.
+
+![dh-algorithm](./Diffie-Hellman-Key-Exchange.png "Diffie Hellman Key Exchange")
+
+---
+
+该算法可以在1-RTT中就完成所有https需要的handshake工作: 协议版本, shared key, 证书传输:
+
+![https-handshake](./https-tls-v1.3-handshake.webp "https handshake - TLS v1.3")
+
+### SNI(Server Name Indication)
+
+在 HTTP 协议里，多个域名可以同时在一个 IP 地址上运行，这就是“虚拟主机”，Web 服务器会使用请求头里的 Host 字段来选择。
+
+但在 HTTPS 里，因为**请求头只有在 TLS 握手之后才能发送**，在握手时就必须选择“虚拟主机”对应的证书，TLS 无法得知域名的信息，就只能用 IP 地址来区分。所以，最早时候每个 HTTPS 域名必须使用独立的 IP 地址，非常不方便。
+
+那么怎么解决这个问题呢？
+
+这还是得用到 TLS 的“扩展”，给协议加个**SNI（Server Name Indication）的“补充条款”**。它的作用和 Host 字段差不多，客户端会在“Client Hello”时带上域名信息，这样服务器就可以根据名字而不是 IP 地址来选择证书。
+
+```
+Extension: server_name (len=19)
+    Server Name Indication extension
+        Server Name Type: host_name (0)
+        Server Name: www.chrono.com
+```
+
+Nginx 很早就基于 SNI 特性支持了 HTTPS 的虚拟主机，但在 OpenResty 里可还以编写 Lua 脚本，利用 Redis、MySQL 等数据库更灵活快速地加载证书。
