@@ -1,9 +1,8 @@
 ---
 title: "Master Authentication"
 date: 2022-12-07T15:15:48+08:00
-draft: true
 author: "whiledoing"
-tags: ["cryptology"]
+tags: ["cryptology", "web"]
 categories: ["tech"]
 ---
 
@@ -135,7 +134,18 @@ echo -n '{"sub": "1234567890", "name": "John Doe", "admin": true}' | base64 \
 
 ![ca-chain](./ca-chain.png "ca-chain")
 
-## SSO
+## OAuth
+
+OAuth2是目前最流行的授权机制，用来授权第三方应用，获取用户数据。
+
+一个例子: 快递员进入小区需获取业主授权, 该授权既要保护用户账密数据, 还需兼顾灵活性. 一个可行方式就是通过第三方系统生成带TTL的token(比如基于物业的安保系统或者保安这样的临时登记), 快递员基于token进入小区.
+
+OAuth就用来规约这种三方授权的流程和规范, 本质上是一种**协议**.
+
+具体参考:
+
+- [OAuth 2.0 的一个简单解释](https://www.ruanyifeng.com/blog/2019/04/oauth_design.html)
+- [OAuth 2.0 的四种方式](https://www.ruanyifeng.com/blog/2019/04/oauth-grant-types.html)
 
 ## HTTPS
 
@@ -175,7 +185,7 @@ TLS v1.3在2018年推出, 相比2008年的v1.2协议, 在多处进行升级: [�
 
 这还是得用到 TLS 的“扩展”，给协议加个**SNI（Server Name Indication）的“补充条款”**。它的作用和 Host 字段差不多，客户端会在“Client Hello”时带上域名信息，这样服务器就可以根据名字而不是 IP 地址来选择证书。
 
-```
+```yaml
 Extension: server_name (len=19)
     Server Name Indication extension
         Server Name Type: host_name (0)
@@ -183,3 +193,27 @@ Extension: server_name (len=19)
 ```
 
 Nginx 很早就基于 SNI 特性支持了 HTTPS 的虚拟主机，但在 OpenResty 里可还以编写 Lua 脚本，利用 Redis、MySQL 等数据库更灵活快速地加载证书。
+
+## SSH(Secure Shell)
+
+> The SSH protocol (also referred to as Secure Shell) is a method for secure remote login from one computer to another. It provides several alternative options for strong authentication, and it protects the communications security and integrity with strong encryption. It is a secure alternative to the non-protected login protocols (such as telnet, rlogin) and insecure file transfer methods (such as FTP).
+
+ssh是一个典型的C/S架构, 有3个部分组成:
+
+1. `ssh-trans`: 负责加密传输, 底层核心基于ECDH确定会话秘钥, 后续基于此对称加密.
+2. `ssh-auth`: 用户身份认证: 常用的方式有publickey和password
+   1. password基于trans的加密能力传输, 所以不会泄露数据.
+   2. publickey认证更常见:
+      1. 客户端上传publickey到服务端的本地数据库`~/.ssh/authorized_keys`, 基于此判断登录的客户端合法性(简单粗暴, 没有TLS的PKI机制, SSH诞生的时还没有TLS)
+      2. 验证通过后, 客户端用私钥签名, 服务端用客户端的公钥认证, 进而确定是**具有合法私钥的客户端**
+   3. 客户端基于`~/.ssh/known_hosts`人为判断服务端公钥合法性: 被称为*trust on first use(TOFU)*
+3. ssh-connect: 基于channel的应用层通信能力.
+
+更加现代的方式是基于CA签名后的公钥证书来鉴定: 客户端和服务端信任特定CA(通过ssh的配置), 认证CA签名后的公钥证书. 这样不需维护`~/.ssh/authorized_keys`和`~/.ssh/known_hosts`文件的数据一致性(比如需要删除离职人员): 证书的TTL特性, 可自动过期无效的证书, 提高安全性也更加灵活(不用把公钥到处上传)
+
+> 本质还是进入中间层来解耦问题: 双方信任CA做为中心节点, 后续的流程均基于CA的签名, 而不需要`M*N`方式匹配和分发公钥: 拓扑结构从`M*N`到`M+N`.
+
+![ssh-certificate-authentication](./ssh-certificate-authentication.png "ssh-certificate-authentication")
+
+1. [If you’re not using SSH certificates you’re doing SSH wrong](https://smallstep.com/blog/use-ssh-certificates/)
+2. [ssh证书登录教程](https://www.ruanyifeng.com/blog/2020/07/ssh-certificate.html)
