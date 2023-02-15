@@ -1182,7 +1182,3 @@ go-land有几个非常好用的技巧：
 - completion时候，使用tab可以替换当前的内容，比如将printf替换到println，而使用回车不会替换，而是插入。
 - 连续两次使用completion按键，会提示可将当前上下文作为第一个变量的函数列表。
 - postfix completion，非常有意思，使用`rr`表示`return error`，在一个函数返回error的情况下，改成如果发现`err != nil`返回error的语句。
-
-## library
-
-### sync.Pool

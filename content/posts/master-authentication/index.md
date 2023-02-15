@@ -56,6 +56,8 @@ const encodeURL = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012345678
 
 JWT常用的计算算法有`HMAC SHA256(HS256)`和`RSA SHA256(RS256)`, 前者是对称加密, 后者是非对称加密.
 
+> HMAC是*Hash-based Message Authentication Code*的缩写, 即基于哈希运算的消息认证码. HMAC利用哈希算法, 以一个密钥和一个消息为输入, 生成一个消息摘要作为输出. HMAC本质上是一种加入了密钥特征的哈希算法.
+
 在分布式系统中, 私钥一般不会大范围共享的, 更多是共享公钥, 所以用`RS256`方法更安全. 其计算公式为:
 
 ```golang
